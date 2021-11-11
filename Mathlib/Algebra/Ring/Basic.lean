@@ -1,6 +1,7 @@
 import Mathlib.Algebra.GroupWithZero.Defs
 import Mathlib.Algebra.Group.Basic
 import Mathlib.Tactic.Spread
+import Mathlib.Tactic.LibrarySearch
 /-
 
 # Semirings and rings
@@ -138,12 +139,15 @@ theorem non_trivial : ¬1 = 0 := IntegralDomain.non_trivial R
 
 theorem prod_nonzero_mul_nonzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0 := IntegralDomain.prod_nonzero_mul_nonzero
 
+-- set_option pp.all true
 theorem pow_nonzero (a : R) (n : ℕ) : a ≠ 0 → a ^ n ≠ 0 := by
   intro h
   induction n with
   | zero =>
     simp
-    exact non_trivial
+    intro hh
+    apply h
+    rw [← one_mul a, hh, zero_mul]
   | succ n ih =>
     rw [pow_succ]
     exact prod_nonzero_mul_nonzero ih h
