@@ -89,7 +89,36 @@ class Ring (R : Type u) extends Semiring R, Neg R, Sub R where
   gsmul_neg' (n : ℕ) (a : R) : gsmul (Int.negSucc n) a = -(gsmul ↑(n.succ) a)
   add_left_neg (a : R) : -a + a = 0
 
+section Ring
+variable {R} [Ring R]
+
 instance {R} [Ring R] : AddCommGroup R := { ‹Ring R› with }
+
+theorem sub_eq_add_neg (a b : R) : a - b = a + -b := Ring.sub_eq_add_neg a b
+
+theorem neg_mul_left (a b : R) : -(a * b) = -a * b := by
+  rw [←add_zero (-a * b), ←add_left_neg (a * b)]
+  rw [←add_assoc (-a * b), add_comm (-a * b), add_assoc]
+  rw [←add_mul, add_left_neg a]
+  simp
+
+theorem neg_mul_right (a b : R) : -(a * b) = a * -b := by
+  rw [←add_zero (a * -b), ←add_left_neg (a * b)]
+  rw [←add_assoc (a * -b), add_comm (a * -b), add_assoc]
+  rw [←mul_add, add_left_neg b]
+  simp
+
+theorem mul_sub (a b c : R) : a * (b - c) = a * b - a * c := by
+  rw [sub_eq_add_neg, mul_add, ←neg_mul_right, ←sub_eq_add_neg]
+
+theorem sub_mul (a b c : R) : (a - b) * c = a * c - b * c := by
+  rw [sub_eq_add_neg, add_mul, ←neg_mul_left, ←sub_eq_add_neg]
+
+@[simp] theorem sub_zero (a : R) : a - 0 = a := by
+  rw [sub_eq_add_neg, ←add_zero (-0), add_left_neg (0: R)]
+  simp
+
+end Ring
 
 class CommRing (R : Type u) extends Ring R where
   mul_comm (a b : R) : a * b = b * a
@@ -97,6 +126,30 @@ class CommRing (R : Type u) extends Ring R where
 instance (R : Type u) [CommRing R] : CommSemiring R where
   __ := inferInstanceAs (Semiring R)
   __ := ‹CommRing R›
+
+class IntegralDomain (R : Type u) extends CommRing R where
+  non_trivial : ¬1 = 0
+  prod_nonzero_mul_nonzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0
+
+section IntegralDomain
+variable {R} [IntegralDomain R]
+
+theorem non_trivial : ¬1 = 0 := IntegralDomain.non_trivial R
+
+theorem prod_nonzero_mul_nonzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0 := IntegralDomain.prod_nonzero_mul_nonzero
+
+theorem pow_nonzero (a : R) (n : ℕ) : a ≠ 0 → a ^ n ≠ 0 := by
+  intro h
+  induction n with
+  | zero =>
+    simp
+    exact non_trivial
+  | succ n ih =>
+    rw [pow_succ]
+    exact prod_nonzero_mul_nonzero ih h
+
+
+end IntegralDomain
 
 /- Instances -/
 

@@ -34,8 +34,8 @@ def delabToRefinableSyntax (e : Expr) : TermElabM Syntax := do
 
 def addSuggestion [Monad m] [MonadLog m] [AddMessageContext m]
     (origStx : Syntax) (suggestion : Syntax) : m Unit :=
-  -- Use obscure Unicode characters to discourage editor implementations.
-  logInfoAt origStx m!"𝔗𝔯𝔶 𝔱𝔥𝔦𝔰: {suggestion}"
+  -- Use smiley characters to make editor implementations fun
+  logInfoAt origStx m!":-D {suggestion}"
 
 def addExactSuggestion (origTac : Syntax) (e : Expr) : TacticM Unit := do
   let stx ← delabToRefinableSyntax e
