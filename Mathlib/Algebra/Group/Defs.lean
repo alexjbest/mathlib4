@@ -369,6 +369,9 @@ by rw [pow_succ', pow_mul_comm]
 @[simp] theorem pow_one (a : M) : a ^ (1:ℕ) = a :=
 by rw [Nat.one_succ_zero, pow_succ, pow_zero, one_mul]
 
+theorem pow_two (a : M) : a ^ (2:ℕ) = a * a :=
+by rw [pow_succ, pow_one]
+
 theorem pow_add (a : M) (m n : ℕ) : a^(m + n) = a^m * a^n := by
   induction n with
   | zero => simp

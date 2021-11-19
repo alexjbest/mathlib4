@@ -2,6 +2,7 @@ import Mathlib.Algebra.GroupWithZero.Defs
 import Mathlib.Algebra.Group.Basic
 import Mathlib.Tactic.Spread
 import Mathlib.Tactic.LibrarySearch
+
 /-
 
 # Semirings and rings
@@ -51,6 +52,14 @@ theorem mul_add (a b c : R) : a * (b + c) = a * b + a * c := Semiring.mul_add a 
 
 theorem add_mul (a b c : R) : (a + b) * c = a * c + b * c := Semiring.add_mul a b c
 
+@[simp] lemma one_pow (n : Nat) : (1 ^ n : R) = 1 := by
+  induction n with
+  | zero =>
+    rw [pow_zero]
+  | succ n ih =>
+    rw [pow_succ, ih]
+    simp
+
 @[simp] lemma ofNat_zero : (ofNat 0 : R) = 0 := rfl
 @[simp] lemma ofNat_one : (ofNat 1 : R) = 1 := rfl
 
@@ -71,6 +80,9 @@ theorem add_mul (a b c : R) : (a + b) * c = a * c + b * c := Semiring.add_mul a 
     exact rfl
   | succ n ih =>
     rw [pow_succ, Nat.pow_succ, ofNat_mul, ih]
+
+theorem add_self_eq_mul_two (a : R) : a + a = 2 * a := by
+  rw [←one_mul a, ←add_mul, one_mul, ←ofNat_one, ←ofNat_add, ofNat_eq_ofNat R 2]
 
 end Semiring
 
@@ -119,14 +131,46 @@ theorem sub_mul (a b c : R) : (a - b) * c = a * c - b * c := by
   rw [sub_eq_add_neg, ←add_zero (-0), add_left_neg (0: R)]
   simp
 
+theorem neg_add (a b : R) : - (a + b) = -a + -b := by
+  have h₁ : - (a + b) = -(a + b) + (a + b) + -a + -b := by
+    rw [add_assoc, add_comm (-a), add_assoc, add_assoc, ← add_assoc b]
+    rw [add_right_neg b, zero_add, add_right_neg a, add_zero]
+  rwa [add_left_neg (a + b), zero_add] at h₁
+
+theorem sub_add_comm (n m k : R) : n + m - k = n - k + m := by
+  rw [sub_eq_add_neg, add_assoc, add_comm m, ←add_assoc, ←sub_eq_add_neg]
+
+@[simp] lemma square_neg_one : -1 ^ 2 = (1 : R) := by
+  rw [pow_succ, pow_one, ←neg_mul_left, one_mul, neg_neg (1 : R)]
+
 end Ring
 
 class CommRing (R : Type u) extends Ring R where
   mul_comm (a b : R) : a * b = b * a
 
+section CommRing
+variable {R} [CommRing R]
+
 instance (R : Type u) [CommRing R] : CommSemiring R where
   __ := inferInstanceAs (Semiring R)
   __ := ‹CommRing R›
+
+theorem square_neg (a : R) : -a ^ 2 = a ^ 2 := by
+  rw [(show -a = -(1 * a) by simp), neg_mul_left, mul_pow _ a, square_neg_one, one_mul]
+
+theorem evenpow_neg {n m : ℕ} (a : R) (h : n = 2 * m) : -a ^ n = a ^ n := by
+  rw [h, pow_mul, pow_mul, square_neg]
+
+theorem oddpow_neg {n m : ℕ} (a : R) (h : n = 2 * m + 1) : -a ^ n = -(a ^ n) := by
+  rw [h, pow_succ, evenpow_neg a (show 2 * m = 2 * m by rfl), ←neg_mul_right, ←pow_succ, Nat.add_one]
+
+lemma square_add (a b : R) : (a + b) ^ 2 = a ^ 2 + 2 * (a * b) + b ^ 2 := by
+  rw [pow_two, mul_add, add_mul, add_mul, ←pow_two, ←pow_two, ←add_assoc, mul_comm b, ←one_mul (a * b), add_assoc (a ^ 2), ←add_mul, add_self_eq_mul_two 1, mul_one, one_mul]
+
+lemma square_sub (a b : R) : (a - b) ^ 2 = a ^ 2 - 2 * (a * b) + b ^ 2 := by
+  rw [sub_eq_add_neg, square_add, square_neg, ←neg_mul_right, ←neg_mul_right, ←sub_eq_add_neg]
+
+end CommRing
 
 class IntegralDomain (R : Type u) extends CommRing R where
   non_trivial : ¬1 = 0
