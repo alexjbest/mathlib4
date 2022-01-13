@@ -3,14 +3,14 @@ import Mathlib.Init.Algebra.Order
 import Mathlib.Algebra.Ring.Basic
 import Mathlib.Init.Data.Nat.Lemmas
 
-inductive NatWithTop where
-  | ofN : ℕ → NatWithTop
-  | top : NatWithTop
+inductive Enat where
+  | ofN : ℕ → Enat
+  | top : Enat
 
-notation "ℕ∪∞" => NatWithTop
-notation "∞" => NatWithTop.top
+notation "ℕ∪∞" => Enat
+notation "∞" => Enat.top
 
-namespace NatWithTop
+namespace Enat
 
 def succ : ℕ∪∞ → ℕ∪∞
   | ofN a => ofN (Nat.succ a)
@@ -37,6 +37,8 @@ def lt (n m : ℕ∪∞) : Prop :=
 instance : LT ℕ∪∞ where
   lt := lt
 
+@[simp] theorem succ_ofN (a : Nat) : succ (ofN a) = ofN a.succ := rfl
+
 @[simp] theorem add_ofN (a b : Nat) : ofN a + ofN b = ofN (a + b) := rfl
 @[simp] theorem add_top (a : ℕ∪∞) : a + ∞ = ∞ := by
   cases a
@@ -46,6 +48,15 @@ instance : LT ℕ∪∞ where
   cases a
   . rfl
   . rfl
+
+theorem lt_top (n : ℕ) : LT.lt (ofN n) ∞ := by
+  exact And.intro (Enat.noConfusion) (le.below_top)
+
+theorem succ_pos (n : ℕ∪∞) : LT.lt (ofN 0) (succ n) := by
+  cases n with
+  | ofN n =>
+    exact And.intro (Enat.noConfusion) (by rw [succ_ofN 0, succ_ofN n]; exact le.in_nat (Nat.succ_le_succ (Nat.zero_le n)))
+  | top => exact lt_top 0
 
 theorem le_refl (n : ℕ∪∞) : LE.le n n := by
   cases n with
@@ -80,11 +91,11 @@ theorem lt_or_ge (n m : ℕ∪∞) : Or (LT.lt n m) (GE.ge n m) := by
   | top     => exact Or.inr (le.below_top)
   | ofN n =>
     cases m with
-    | top     => exact Or.inl (And.intro NatWithTop.noConfusion le.below_top)
+    | top     => exact Or.inl (And.intro Enat.noConfusion le.below_top)
     | ofN m =>
       cases Nat.lt_or_ge n m with
       | inl h =>
-        exact Or.inl (And.intro NatWithTop.noConfusion (le.in_nat h))
+        exact Or.inl (And.intro Enat.noConfusion (le.in_nat h))
       | inr h =>
         exact Or.inr (le.in_nat h)
 
@@ -143,6 +154,14 @@ lemma le_ofN (m n : Nat) : m ≤ n ↔ ofN m ≤ ofN n := by
   cases h
   assumption
 
+theorem lt_ofN (m n : ℕ) : m < n ↔ ofN m < ofN n := by
+  apply Iff.intro
+  intro h
+  exact And.intro (Enat.noConfusion) (by rw [succ_ofN]; exact le.in_nat h)
+  intro h
+  cases h.right
+  assumption
+
 lemma eq_ofN (m n : Nat) : m = n ↔ ofN m = ofN n := by
   apply Iff.intro
   intro h
@@ -150,7 +169,6 @@ lemma eq_ofN (m n : Nat) : m = n ↔ ofN m = ofN n := by
   intro h
   cases h
   rfl
-
 
 instance : DecidableRel ((. ≤ . ) : ℕ∪∞ → ℕ∪∞ → Prop) := fun n m =>
 match n, m with
@@ -167,6 +185,17 @@ match n, m with
   | ∞, ofN a     => isFalse (fun h => by cases h)
   | ofN a, ∞     => isFalse (fun h => by cases h)
 
+instance : DecidableRel ((. < . ) : ℕ∪∞ → ℕ∪∞ → Prop) := by sorry
+
+
+theorem eq_zero_or_pos : ∀ (n : ℕ∪∞), n = ofN 0 ∨ n > ofN 0
+  | ofN 0   => Or.inl rfl
+  | ofN (Nat.succ n) => by rw [←succ_ofN n]; exact Or.inr (succ_pos _)
+  | ∞ => Or.inr (lt_top 0)
+
+lemma pos_of_ne_zero {n : ℕ∪∞} : n ≠ ofN 0 → ofN 0 < n :=
+Or.resolve_left (eq_zero_or_pos n)
+
 instance : LinearOrder ℕ∪∞ :=
 { le               := le,
   le_refl          := le_refl,
@@ -179,8 +208,6 @@ instance : LinearOrder ℕ∪∞ :=
   decidable_le     := inferInstance,
   decidable_eq     := inferInstance }
 
-
-
 instance : AddCommMonoid ℕ∪∞ :=
 { add_assoc   := by sorry,
   zero        := ofN Nat.zero,
@@ -190,4 +217,4 @@ instance : AddCommMonoid ℕ∪∞ :=
   nsmul_succ' := by sorry,
   add_comm    := by sorry }
 
-end NatWithTop
+end Enat

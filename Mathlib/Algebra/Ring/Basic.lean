@@ -174,14 +174,23 @@ end CommRing
 
 class IntegralDomain (R : Type u) extends CommRing R where
   non_trivial : ¬1 = 0
-  prod_nonzero_mul_nonzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0
+  factors_nzero_mul_nzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0
 
 section IntegralDomain
 variable {R} [IntegralDomain R]
 
 theorem non_trivial : ¬1 = 0 := IntegralDomain.non_trivial R
 
-theorem prod_nonzero_mul_nonzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0 := IntegralDomain.prod_nonzero_mul_nonzero
+theorem factors_nzero_mul_nzero {a b : R} : a ≠ 0 → b ≠ 0 → a * b ≠ 0 := IntegralDomain.factors_nzero_mul_nzero
+
+theorem mul_eq_zero_iff_factor_eq_zero (a b : R) : a * b = 0 ↔ a = 0 ∨ b = 0 := by
+  apply Iff.intro
+  . intro mul_eq_zero
+    sorry
+  . intro factor_eq_zero
+    cases factor_eq_zero with
+    | inl a_zero => rw [a_zero, zero_mul]
+    | inr b_zero => rw [b_zero, mul_zero]
 
 -- set_option pp.all true
 theorem pow_nonzero (a : R) (n : ℕ) : a ≠ 0 → a ^ n ≠ 0 := by
@@ -194,8 +203,7 @@ theorem pow_nonzero (a : R) (n : ℕ) : a ≠ 0 → a ^ n ≠ 0 := by
     rw [← one_mul a, hh, zero_mul]
   | succ n ih =>
     rw [pow_succ]
-    exact prod_nonzero_mul_nonzero ih h
-
+    exact factors_nzero_mul_nzero ih h
 
 end IntegralDomain
 
@@ -234,7 +242,7 @@ namespace Int
 
 instance : Numeric ℤ := ⟨Int.ofNat⟩
 
-instance : CommRing ℤ where
+instance : IntegralDomain ℤ where
   zero_mul := Int.zero_mul
   mul_zero := Int.mul_zero
   mul_comm := Int.mul_comm
@@ -269,5 +277,7 @@ instance : CommRing ℤ where
     | negSucc m =>
       rw [Int.mul_negSucc_ofNat_negSucc_ofNat, Int.ofNat_mul_negSucc_ofNat]
       exact rfl
+  non_trivial := by sorry
+  factors_nzero_mul_nzero := by sorry
 
 end Int
