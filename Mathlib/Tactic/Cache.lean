@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Author: Gabriel Ebner
 -/
 import Lean
+import Mathlib.Logic.Nonempty
 
 /-!
 # Once-per-file cache for tactics
@@ -49,8 +50,8 @@ def Cache (α : Type) :=
   IO.Ref <| Sum (MetaM α) <|
     Task <| Except Exception α
 
-instance : Inhabited (Cache α) :=
-  inferInstanceAs <| Inhabited (IO.Ref _)
+instance : Nonempty (Cache α) :=
+  inferInstanceAs <| Nonempty (IO.Ref _)
 
 /-- Creates a cache with an initialization function. -/
 def Cache.mk (init : MetaM α) : IO (Cache α) :=
@@ -69,6 +70,11 @@ def Cache.get [Monad m] [MonadEnv m] [MonadOptions m] [MonadLiftT BaseIO m] [Mon
     | Sum.inl init =>
       let env ← getEnv
       let options ← getOptions -- TODO: sanitize options?
+      -- Default heartbeats to a reasonable value.
+      -- otherwise librarySearch times out on mathlib
+      -- TODO: add customization option
+      let options := Core.maxHeartbeats.set options <|
+        options.get? Core.maxHeartbeats.name |>.getD 1000000
       let res ← EIO.asTask do
         let metaCtx : Meta.Context := {}
         let metaState : Meta.State := {}
@@ -88,8 +94,8 @@ where a given function is applied to `α` for every constant.
 def DeclCache (α : Type) :=
   Cache α × (Name → ConstantInfo → α → MetaM α)
 
-instance : Inhabited (DeclCache α) :=
-  inferInstanceAs <| Inhabited (_ × _)
+instance : Nonempty (DeclCache α) :=
+  inferInstanceAs <| Nonempty (_ × _)
 
 /--
 Creates a `DeclCache`.

@@ -1,6 +1,8 @@
-import Mathlib.Data.Int.Basic
+-- import Mathlib.Data.Int.Basic
 import Mathlib.Data.Nat.Basic
 import Mathlib.Init.Data.Nat.Lemmas
+import Mathlib.Init.Data.Int.Lemmas
+import Mathlib.Init.Data.Int.Basic
 import Mathlib.Logic.Basic
 import Mathlib.Init.Algebra.Order
 
@@ -39,8 +41,8 @@ def val_bin_nat (x : ℕ) : ℕ × ℕ :=
     (0, x)
   else
     (0, 0)
-termination_by
-  measure id
+termination_by _ =>
+  x
 decreasing_by
   simp [measure, invImage, InvImage, lt_wfRel]
   exact div2_lt_self h.left
@@ -156,8 +158,8 @@ def kronecker_odd (k : ℤ) (a b : ℕ) : ℤ :=
   let k' := if v_r.fst % 2 = 0 then k else k * (kronecker_2 b);
   let k'' := if v_r.snd % 4 = 3 ∧ b % 4 = 3 then k' else -k';
   kronecker_odd k'' (b % v_r.snd) v_r.snd
-termination_by
-  measure (fun ⟨k, a, b⟩ => a)
+termination_by _ =>
+  a
 decreasing_by
   simp [measure, invImage, InvImage, lt_wfRel]
   apply lt_of_lt_of_le _ (odd_part_le_self_nat _)

@@ -209,10 +209,12 @@ protected lemma sub_eq_iff_eq_add {a b c : ℕ} (ab : b ≤ a) : a - b = c ↔ a
 protected lemma lt_of_sub_eq_succ (H : m - n = succ l) : n < m :=
 not_le.1 fun H' => by simp [Nat.sub_eq_zero_of_le H'] at H
 
-protected lemma zero_min (a : ℕ) : Nat.min 0 a = 0 :=
+@[simp] protected lemma min_eq_min (a : ℕ) : Nat.min a b = min a b := rfl
+
+protected lemma zero_min (a : ℕ) : min 0 a = 0 :=
 min_eq_left (zero_le a)
 
-protected lemma min_zero (a : ℕ) : Nat.min a 0 = 0 :=
+protected lemma min_zero (a : ℕ) : min a 0 = 0 :=
 min_eq_right (zero_le a)
 
 -- Distribute succ over min
@@ -347,7 +349,7 @@ def discriminate (H1: n = 0 → α) (H2 : ∀m, n = succ m → α) : α :=
   | 0 => H1 e
   | succ m => H2 m e
 
-lemma one_succ_zero : 1 = succ 0 := rfl
+lemma one_eq_succ_zero : 1 = succ 0 := rfl
 
 def two_step_induction {P : ℕ → Sort u} (H1 : P 0) (H2 : P 1)
     (H3 : ∀ (n : ℕ) (IH1 : P n) (IH2 : P (succ n)), P (succ (succ n))) : (a : ℕ) → P a
@@ -790,12 +792,12 @@ by rw [Nat.mul_comm m k, Nat.mul_comm n k] at H; exact Nat.dvd_of_mul_dvd_mul_le
 /- --- -/
 
 protected lemma mul_le_mul_of_nonneg_left {a b c : ℕ} (h₁ : a ≤ b) : c * a ≤ c * b := by
-  by_cases hba: b ≤ a; { simp [Nat.le_antisymm hba h₁]; apply Nat.le_refl }
+  by_cases hba: b ≤ a; { simp [Nat.le_antisymm hba h₁] }
   by_cases hc0 : c ≤ 0; { simp [Nat.le_antisymm hc0 (zero_le c), Nat.zero_mul] }
   exact Nat.le_of_lt (Nat.mul_lt_mul_of_pos_left (not_le.1 hba) (not_le.1 hc0))
 
 protected lemma mul_le_mul_of_nonneg_right {a b c : ℕ} (h₁ : a ≤ b) : a * c ≤ b * c := by
-  by_cases hba : b ≤ a; { simp [Nat.le_antisymm hba h₁]; apply Nat.le_refl }
+  by_cases hba : b ≤ a; { simp [Nat.le_antisymm hba h₁] }
   by_cases hc0 : c ≤ 0; { simp [Nat.le_antisymm hc0 (zero_le c), Nat.mul_zero] }
   exact Nat.le_of_lt (Nat.mul_lt_mul_of_pos_right (not_le.1 hba) (not_le.1 hc0))
 

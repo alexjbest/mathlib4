@@ -4,7 +4,6 @@ import Mathlib.Algebra.Ring.Basic
 import Mathlib.Init.Data.Nat.Lemmas
 import Mathlib.Init.Data.Int.Lemmas
 import Mathlib.Data.Nat.Enat
-import Mathlib.Data.Int.Basic
 
 --class ValueMonoid (A : Type u) extends AddCommMonoid A, LinearOrder A
 
@@ -92,10 +91,9 @@ def nat_valuation : ℕ → ℕ → ℕ∪∞
   | 0, (m+1) => ofN 0
   | 1, (m+1) => ∞
   | (q+2), (m+1) => if (m+1) % (q+2) ≠ 0 then ofN 0 else succ (nat_valuation (q+2) ((m+1) / (q+2)))
-termination_by
-  measure (fun ⟨p, k⟩ => k)
+termination_by nat_valuation p k => k
 decreasing_by
-  simp only [measure, invImage, InvImage, Nat.lt_wfRel]
+  simp [WellFoundedRelation.rel, measure, invImage, InvImage, Nat.lt_wfRel]
   apply Nat.div_lt_self
   . exact Nat.zero_lt_succ m
   . exact Nat.succ_lt_succ (Nat.zero_lt_succ q)
@@ -155,7 +153,9 @@ def primeDVR {p : ℕ} (hp : nat_prime p) : DiscretelyValuedRing (p : ℤ) := {
   valtn := primeVal hp,
   decr_val := decr_val_p p (primeVal hp).v,
   zero_valtn_decr := zero_valtn_decr_p (primeVal hp).v,
-  pos_valtn_decr := sorry
+  pos_valtn_decr := sorry,
+  non_trivial := sorry,
+  factors_nzero_mul_nzero := sorry
 }
 
 

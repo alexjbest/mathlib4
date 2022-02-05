@@ -2,8 +2,26 @@ import Mathlib.Algebra.EllipticCurve.Kronecker
 import Mathlib.Algebra.EllipticCurve.Model
 import Mathlib.Algebra.EllipticCurve.ValuedRing
 import Mathlib.Data.Nat.Enat
-import Mathlib.Data.Int.Basic
+-- import Mathlib.Data.Int.Basic
+import Lean
+import Lean.Compiler.IR.CompilerM
+open Lean
+open Lean.Meta
+def a : {x : ℕ // 1 < x} := ⟨1 , sorry⟩
+#eval a
+def b : ℕ := if 1 = 1 then 1 else sorry
+#eval b
+def c (n : ℕ) : ℕ := if 1 = 1 then 1 else c (n + 1)
+termination_by _ => n
+decreasing_by sorry
+#eval c 4
+open Lean.IR
 
+def printSorry (pre : Name) : MetaM Unit := do
+  let e ← Lean.getEnv
+  let c := getSorryDep e pre
+  IO.println s!"{c}"
+#eval printSorry `a
 lemma prime_2 : nat_prime 2 := by
   simp only [nat_prime, true_and]
   sorry
@@ -168,7 +186,8 @@ def count_roots_cubic_aux (b c d : ℤ) (p : ℕ) (x : ℕ) : ℕ := match x wit
 def count_roots_cubic (b c d : ℤ) (p : ℕ) : ℕ :=
   count_roots_cubic_aux (modulo b p) (modulo c p) (modulo d p) p (p - 1)
 
-unsafe def kodaira_type_Is (p : ℕ) (dvrp : DiscretelyValuedRing (ofNat p)) (valp : ℤ → ℕ∪∞) (e : ValidModel ℤ) (u0 r0 s0 t0 : ℤ) (m q : ℕ) :=
+unsafe
+def kodaira_type_Is (p : ℕ) (dvrp : DiscretelyValuedRing (ofNat p)) (valp : ℤ → ℕ∪∞) (e : ValidModel ℤ) (u0 r0 s0 t0 : ℤ) (m q : ℕ) :=
   let (r, t) := (r0, t0);
   let (a3q, a6q2) := (sub_val dvrp e.a3 q, sub_val dvrp e.a6 (2 * q));
   if valp (a3q ^ 2 + 4 * a6q2) = 0 then
@@ -188,8 +207,8 @@ unsafe def kodaira_type_Is (p : ℕ) (dvrp : DiscretelyValuedRing (ofNat p)) (va
   let r := r + u0 ^ 2 + a * p ^ q; let t := t + u0 ^ 2 * s0 * a * p ^ q;
   kodaira_type_Is p dvrp valp e u0 r s0 t (m + 2) (q + 1)
 
-
-unsafe def tate_small_prime (p : ℕ) (hp : nat_prime p) (e : ValidModel ℤ) (u0 r0 s0 t0 : ℤ) : Kodaira × ℕ × ℕ × (ℤ × ℤ × ℤ × ℤ) :=
+unsafe
+def tate_small_prime (p : ℕ) (hp : nat_prime p) (e : ValidModel ℤ) (u0 r0 s0 t0 : ℤ) : Kodaira × ℕ × ℕ × (ℤ × ℤ × ℤ × ℤ) :=
   if smallp : p ≠ 2 ∧ p ≠ 3 then (I 0, 0, 0, (0, 0, 0, 0)) else
   let (u, r, s, t) := (u0, r0, s0, t0);
   let dvrp := primeDVR hp; let navp := dvrp.valtn; let valp := navp.v;
@@ -247,10 +266,11 @@ unsafe def tate_small_prime (p : ℕ) (hp : nat_prime p) (e : ValidModel ℤ) (u
   let e := ValidModel.rst_iso 0 0 k e; let t := t + k * u ^ 3;
   if valp e.a4 < ofN 4 then (IIIs, n - 7, 2, (u, r, s, t)) else
   if valp e.a6 < ofN 6 then (IIs, n - 8, 1, (u, r, s, t)) else
-  have pnz : p ≠ 0 := ne_of_lt (lt_trans Nat.zero_lt_one hp.left);
+  have pnz : p ≠ 0 := (ne_of_lt (lt_trans Nat.zero_lt_one hp.left)).symm;
   tate_small_prime p hp (ValidModel.u_iso (p : ℤ) e) (p * u) r s t
 
-unsafe def tate_algorithm (p : ℕ) (e : ValidModel ℤ) : Kodaira × ℕ × ℕ × (ℤ × ℤ × ℤ × ℤ) :=
+unsafe
+def tate_algorithm (p : ℕ) (e : ValidModel ℤ) : Kodaira × ℕ × ℕ × (ℤ × ℤ × ℤ × ℤ) :=
   if p = 2 then
     tate_small_prime 2 (prime_2) e 1 0 0 0
   else if p = 3 then
@@ -266,6 +286,11 @@ def i67star : ValidModel ℤ := ⟨ ⟨0,-1,0,-808051160,9376500497392⟩ , by s
 def test_model : ValidModel ℤ := ⟨ ⟨1,0,1,-1,0⟩ , by simp⟩
 
 #eval test_model.discr
+#eval tate_small_prime 2 sorry test_model 1 0 0 0
 #eval tate_algorithm 2 test_model
+#eval tate_big_prime 7 sorry test_model
 
+#eval printSorry `Int.tate_algorithm
+set_option pp.all true
+#print Int.tate_algorithm
 end Int

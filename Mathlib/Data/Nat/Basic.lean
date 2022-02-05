@@ -5,6 +5,8 @@ import Mathlib.Logic.Basic
 
 namespace Nat
 
+attribute [simp] succ_ne_zero lt_succ_self
+
 -- TODO: in mathlib, this is done for ordered monoids
 protected lemma pos_iff_ne_zero {n : ℕ} : 0 < n ↔ n ≠ 0 := by
   refine ⟨?_, Nat.pos_of_ne_zero⟩
@@ -28,10 +30,10 @@ protected lemma le_or_le (a b : ℕ) : a ≤ b ∨ b ≤ a := (Nat.lt_or_ge _ _)
 
 protected lemma le_of_not_le {a b : ℕ} : ¬ a ≤ b → b ≤ a := (Nat.le_or_le _ _).resolve_left
 
-@[simp] protected lemma not_lt {n m : ℕ} : ¬ n < m ↔ m ≤ n :=
+protected lemma not_lt {n m : ℕ} : ¬ n < m ↔ m ≤ n :=
 ⟨Nat.le_of_not_lt, Nat.not_lt_of_le⟩
 
-@[simp] protected lemma not_le {n m : ℕ} : ¬ n ≤ m ↔ m < n :=
+protected lemma not_le {n m : ℕ} : ¬ n ≤ m ↔ m < n :=
 ⟨Nat.lt_of_not_le, Nat.not_le_of_lt⟩
 
 protected lemma lt_or_eq_of_le {n m : ℕ} (h : n ≤ m) : n < m ∨ n = m :=
@@ -40,6 +42,20 @@ protected lemma lt_or_eq_of_le {n m : ℕ} (h : n ≤ m) : n < m ∨ n = m :=
 lemma eq_of_mul_eq_mul_right {n m k : ℕ} (Hm : 0 < m) (H : n * m = k * m) : n = k :=
 by rw [Nat.mul_comm n m, Nat.mul_comm k m] at H
    exact Nat.eq_of_mul_eq_mul_left Hm H
+
+theorem le_zero_iff {i : ℕ} : i ≤ 0 ↔ i = 0 :=
+  ⟨Nat.eq_zero_of_le_zero, λ h => h ▸ le_refl i⟩
+
+theorem lt_succ_iff {m n : ℕ} : m < succ n ↔ m ≤ n :=
+⟨le_of_lt_succ, lt_succ_of_le⟩
+
+/-! ### `succ` -/
+
+lemma succ_eq_one_add (n : ℕ) : n.succ = 1 + n := by
+  rw [Nat.succ_eq_add_one, Nat.add_comm]
+
+theorem succ_inj' {n m : ℕ} : succ n = succ m ↔ n = m :=
+⟨succ.inj, congr_arg _⟩
 
 /- sub properties -/
 
@@ -74,8 +90,7 @@ protected lemma min_comm (a b : ℕ) : Nat.min a b = Nat.min b a := by
 
 protected lemma min_le_left (a b : ℕ) : Nat.min a b ≤ a := by
   simp [Nat.min]; by_cases a ≤ b <;> simp [h]
-  · exact Nat.le_refl _
-  · exact Nat.le_of_not_le h
+  exact Nat.le_of_not_le h
 
 protected lemma min_eq_left (h : a ≤ b) : Nat.min a b = a :=
 by simp [Nat.min, h]
@@ -96,12 +111,15 @@ lemma mul_div_le (m n : ℕ) : n * (m / n) ≤ m := by
 
 /- Up -/
 
-/-- A well-ordered relation for "upwards" induction on the ℕural numbers up to some bound `ub`. -/
+/-- A well-ordered relation for "upwards" induction on the natural numbers up to some bound `ub`. -/
 def Up (ub a i : ℕ) := i < a ∧ i < ub
 
 lemma Up.next {ub i} (h : i < ub) : Up ub (i+1) i := ⟨Nat.lt_succ_self _, h⟩
 
 lemma Up.WF (ub) : WellFounded (Up ub) :=
   Subrelation.wf (h₂ := (measure (ub - .)).wf) @fun a i ⟨ia, iu⟩ => Nat.sub_lt_sub_left iu ia
+
+/-- A well-ordered relation for "upwards" induction on the natural numbers up to some bound `ub`. -/
+def upRel (ub : ℕ) : WellFoundedRelation Nat := ⟨Up ub, Up.WF ub⟩
 
 end Nat

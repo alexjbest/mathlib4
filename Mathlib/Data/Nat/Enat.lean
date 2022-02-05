@@ -2,6 +2,7 @@ import Mathlib.Algebra.Group.Defs
 import Mathlib.Init.Algebra.Order
 import Mathlib.Algebra.Ring.Basic
 import Mathlib.Init.Data.Nat.Lemmas
+import Mathlib.Init.Algebra.Order
 
 inductive Enat where
   | ofN : ℕ → Enat
@@ -185,8 +186,12 @@ match n, m with
   | ∞, ofN a     => isFalse (fun h => by cases h)
   | ofN a, ∞     => isFalse (fun h => by cases h)
 
-instance : DecidableRel ((. < . ) : ℕ∪∞ → ℕ∪∞ → Prop) := by sorry
-
+instance : Preorder ℕ∪∞ :=
+{ le               := le,
+  le_refl          := le_refl,
+  le_trans         := @le_trans,
+  lt_iff_le_not_le := @lt_iff_le_not_le,
+  lt               := lt}
 
 theorem eq_zero_or_pos : ∀ (n : ℕ∪∞), n = ofN 0 ∨ n > ofN 0
   | ofN 0   => Or.inl rfl
@@ -196,17 +201,14 @@ theorem eq_zero_or_pos : ∀ (n : ℕ∪∞), n = ofN 0 ∨ n > ofN 0
 lemma pos_of_ne_zero {n : ℕ∪∞} : n ≠ ofN 0 → ofN 0 < n :=
 Or.resolve_left (eq_zero_or_pos n)
 
-instance : LinearOrder ℕ∪∞ :=
-{ le               := le,
-  le_refl          := le_refl,
-  le_trans         := @le_trans,
-  le_antisymm      := @le_antisymm,
-  le_total         := @le_total,
-  lt               := lt,
-  lt_iff_le_not_le := @lt_iff_le_not_le,
-  decidable_lt     := inferInstance,
-  decidable_le     := inferInstance,
-  decidable_eq     := inferInstance }
+instance : LinearOrder ℕ∪∞ := {
+  le_antisymm      := @le_antisymm
+  le_total         := @le_total
+  decidable_lt     := inferInstance
+  decidable_le     := inferInstance
+  decidable_eq     := inferInstance
+  __ := Enat.instPreorderEnat
+  }
 
 instance : AddCommMonoid ℕ∪∞ :=
 { add_assoc   := by sorry,

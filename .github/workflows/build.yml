@@ -25,13 +25,16 @@ jobs:
 
       - name: update Mathlib.lean
         run: |
-          find Mathlib -name "*.lean" | sort | sed 's/\.lean//;s,/,.,g;s/^/import /' > Mathlib.lean
+          find Mathlib -name "*.lean" | LC_ALL=C sort | sed 's/\.lean//;s,/,.,g;s/^/import /' > Mathlib.lean
 
       - name: build mathlib
         run: lake build
 
       - name: test mathlib
         run: make test
+
+      - name: lint mathlib
+        run: env LEAN_PATH=build/lib lean scripts/runLinter.lean
 
       - name: check that all files are imported
         run: git diff --exit-code

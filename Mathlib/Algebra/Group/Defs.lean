@@ -1,5 +1,5 @@
-import Mathlib.Data.Nat.Basic -- *only* for notation ℕ which should be in a "prelude"
-import Mathlib.Data.Int.Basic -- *only* for notation ℤ which should be in a "prelude"
+import Mathlib.Init.Data.Nat.Lemmas
+import Mathlib.Init.Data.Int.Basic
 import Mathlib.Tactic.Spread
 
 /-!
@@ -16,8 +16,6 @@ local macro "ofNat_class" Class:ident n:num : command =>
 
   instance {α} [OfNat α (nat_lit $n)] : $Class α where
     $field:ident := $n)
-
-example : Nat := 0 -- terminate macro block
 
 ofNat_class Zero 0
 ofNat_class One 1
@@ -177,11 +175,10 @@ end AddMonoid_lemmas
 
 -/
 
-class AddCommMonoid (A : Type u) extends AddMonoid A where
-  add_comm (a b : A) : a + b = b + a
-
-instance (A : Type u) [AddCommMonoid A] : AddCommSemigroup A where
-  __ := ‹AddCommMonoid A›
+class AddCommMonoid (A : Type u) extends AddMonoid A, AddCommSemigroup A where
+  -- TODO: doesn't work
+  zero_add a := (by rw [add_comm, add_zero])
+  add_zero a := (by rw [add_comm, zero_add])
 
 /-
 
@@ -200,6 +197,8 @@ class SubNegMonoid (A : Type u) extends AddMonoid A, Neg A, Sub A where
   gsmul_zero' : ∀ (a : A), gsmul 0 a = 0
   gsmul_succ' (n : ℕ) (a : A) : gsmul (Int.ofNat n.succ) a = a + gsmul (Int.ofNat n) a
   gsmul_neg' (n : ℕ) (a : A) : gsmul (Int.negSucc n) a = -(gsmul ↑(n.succ) a)
+
+export SubNegMonoid (sub_eq_add_neg)
 
 /-
 
@@ -222,7 +221,7 @@ theorem neg_add_self (a : A) : -a + a = 0 := add_left_neg a
 @[simp] theorem neg_add_cancel_left (a b : A) : -a + (a + b) = b :=
 by rw [← add_assoc, add_left_neg, zero_add]
 
-@[simp] theorem neg_eq_of_add_eq_zero (h : a + b = 0) : -a = b :=
+theorem neg_eq_of_add_eq_zero (h : a + b = 0) : -a = b :=
 left_neg_eq_right_neg (neg_add_self a) h
 
 @[simp] theorem neg_neg (a : A) : -(-a) = a :=
@@ -244,6 +243,9 @@ instance (A : Type u) [AddGroup A] : IsAddRightCancel A where
 instance (A : Type u) [AddGroup A] : IsAddLeftCancel A where
   add_left_cancel a b c h := by
   rw [← neg_add_cancel_left a b, h, neg_add_cancel_left]
+
+lemma eq_of_sub_eq_zero' (h : a - b = 0) : a = b :=
+  add_right_cancel <| show a + (-b) = b + (-b) by rw [← sub_eq_add_neg, h, add_neg_self]
 
 end AddGroup_lemmas
 
@@ -268,15 +270,21 @@ instance (A : Type u) [AddCommGroup A] : AddCommMonoid A where
 class Semigroup (G : Type u) extends Mul G where
   mul_assoc (a b c : G) : (a * b) * c = a * (b * c)
 
-theorem mul_assoc {G : Type u} [Semigroup G] :
-  ∀ a b c : G, a * b * c = a * (b * c) :=
-Semigroup.mul_assoc
+export Semigroup (mul_assoc)
 
 class CommSemigroup (G : Type u) extends Semigroup G where
   mul_comm (a b : G) : a * b = b * a
 
-theorem mul_comm {M : Type u} [CommSemigroup M] : ∀ a b : M, a * b = b * a :=
-CommSemigroup.mul_comm
+export CommSemigroup (mul_comm)
+
+lemma mul_left_comm {M} [CommSemigroup M] (a b c : M) : a * (b * c) = b * (a * c) :=
+by rw [← mul_assoc, mul_comm a, mul_assoc]
+
+-- Funky Lean 3 proof of the above:
+--left_comm has_mul.mul mul_comm mul_assoc
+
+lemma mul_right_comm {M} [CommSemigroup M] (a b c : M) : a * b * c = a * c * b :=
+by rw [mul_assoc, mul_comm b c, mul_assoc]
 
 /-
 
@@ -367,7 +375,7 @@ theorem pow_succ (n : ℕ) (a : M) : a ^ n.succ = a ^ n * a :=
 by rw [pow_succ', pow_mul_comm]
 
 @[simp] theorem pow_one (a : M) : a ^ (1:ℕ) = a :=
-by rw [Nat.one_succ_zero, pow_succ, pow_zero, one_mul]
+by rw [Nat.one_eq_succ_zero, pow_succ, pow_zero, one_mul]
 
 theorem pow_two (a : M) : a ^ (2:ℕ) = a * a :=
 by rw [pow_succ, pow_one]
@@ -405,11 +413,11 @@ variable {M} [CommMonoid M]
 instance : CommSemigroup M where
   __ := ‹CommMonoid M›
 
-theorem mul_pow {M} [CommMonoid M] (a b : M) (n : ℕ)  : (a * b)^n= a^n * b^n := by
+theorem mul_pow (a b : M) (n : ℕ)  : (a * b)^n= a^n * b^n := by
   induction n with
   | zero => simp
   | succ n ih =>
-    simp [pow_succ', ih, @mul_comm M _, @mul_assoc M _]
+    simp only [pow_succ, ih, mul_assoc, mul_left_comm _ a]
 
 end CommMonoid
 
