@@ -3,25 +3,6 @@ import Mathlib.Algebra.EllipticCurve.Model
 import Mathlib.Algebra.EllipticCurve.ValuedRing
 import Mathlib.Data.Nat.Enat
 -- import Mathlib.Data.Int.Basic
-import Lean
-import Lean.Compiler.IR.CompilerM
-open Lean
-open Lean.Meta
-def a : {x : ℕ // 1 < x} := ⟨1 , sorry⟩
-#eval a
-def b : ℕ := if 1 = 1 then 1 else sorry
-#eval b
-def c (n : ℕ) : ℕ := if 1 = 1 then 1 else c (n + 1)
-termination_by _ => n
-decreasing_by sorry
-#eval c 4
-open Lean.IR
-
-def printSorry (pre : Name) : MetaM Unit := do
-  let e ← Lean.getEnv
-  let c := getSorryDep e pre
-  IO.println s!"{c}"
-#eval printSorry `a
 lemma prime_2 : nat_prime 2 := by
   simp only [nat_prime, true_and]
   sorry
@@ -270,16 +251,13 @@ def tate_small_prime (p : ℕ) (hp : nat_prime p) (e : ValidModel ℤ) (u0 r0 s0
   tate_small_prime p hp (ValidModel.u_iso (p : ℤ) e) (p * u) r s t
 
 unsafe
-def tate_algorithm (p : ℕ) (e : ValidModel ℤ) : Kodaira × ℕ × ℕ × (ℤ × ℤ × ℤ × ℤ) :=
+def tate_algorithm (p : ℕ) (hp : nat_prime p) (e : ValidModel ℤ) : Kodaira × ℕ × ℕ × (ℤ × ℤ × ℤ × ℤ) :=
   if p = 2 then
     tate_small_prime 2 (prime_2) e 1 0 0 0
   else if p = 3 then
     tate_small_prime 3 (prime_3) e 1 0 0 0
   else
-  if hp : nat_prime p then
     tate_big_prime p hp e
-  else
-    (I 0, 0, 0, (0, 0, 0, 0))
 
 def i67star : ValidModel ℤ := ⟨ ⟨0,-1,0,-808051160,9376500497392⟩ , by simp⟩
 
@@ -287,10 +265,10 @@ def test_model : ValidModel ℤ := ⟨ ⟨1,0,1,-1,0⟩ , by simp⟩
 
 #eval test_model.discr
 #eval tate_small_prime 2 sorry test_model 1 0 0 0
-#eval tate_algorithm 2 test_model
+#eval tate_algorithm 2 sorry test_model
+#eval tate_algorithm 3 sorry test_model
+#eval tate_algorithm 5 sorry test_model
 #eval tate_big_prime 7 sorry test_model
+#eval tate_algorithm 2 sorry i67star
 
-#eval printSorry `Int.tate_algorithm
-set_option pp.all true
-#print Int.tate_algorithm
 end Int
